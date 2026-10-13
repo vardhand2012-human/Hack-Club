@@ -1,0 +1,276 @@
+# Hack-Club
+Hack Club
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Famous U.S. Landmarks Explorer</title>
+  
+  <!-- Leaflet CSS for Map Rendering -->
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root {
+      --primary-color: #1e3a8a;
+      --secondary-color: #3b82f6;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-color: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 350px;
+      background-color: var(--card-bg);
+      border-right: 1px solid #e2e8f0;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .sidebar h2 {
+      font-size: 1.1rem;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .landmark-card {
+      background: var(--bg-color);
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .landmark-card:hover {
+      border-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+
+    .landmark-card.active {
+      border-color: var(--secondary-color);
+      background-color: #eff6ff;
+    }
+
+    .landmark-card h3 {
+      font-size: 1rem;
+      color: var(--primary-color);
+    }
+
+    .landmark-card p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+
+    /* Map Display */
+    #map {
+      flex: 1;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column-reverse;
+      }
+      .sidebar {
+        width: 100%;
+        height: 40%;
+      }
+      #map {
+        height: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🇺🇸 Famous U.S. Landmarks Explorer</h1>
+  </header>
+
+  <div class="main-container">
+    <!-- Sidebar List -->
+    <div class="sidebar">
+      <h2>Select a Landmark</h2>
+      <div id="landmark-list"></div>
+    </div>
+
+    <!-- Map Area -->
+    <div id="map"></div>
+  </div>
+
+  <!-- Leaflet JavaScript -->
+  <script 
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+
+  <script>
+    // List of famous compact/specific U.S. landmarks
+    const landmarks = [
+      {
+        id: "times-square",
+        name: "Times Square",
+        location: "New York City, NY",
+        description: "Bustling commercial intersection famous for digital billboards and New Year's Eve.",
+        lat: 40.7580,
+        lng: -73.9855,
+        zoom: 17
+      },
+      {
+        id: "statue-of-liberty",
+        name: "Statue of Liberty",
+        location: "New York, NY",
+        description: "Iconic copper statue representing freedom on Liberty Island.",
+        lat: 40.6892,
+        lng: -74.0445,
+        zoom: 17
+      },
+      {
+        id: "golden-gate-bridge",
+        name: "Golden Gate Bridge",
+        location: "San Francisco, CA",
+        description: "Famous suspension bridge spanning the Golden Gate strait.",
+        lat: 37.8199,
+        lng: -122.4783,
+        zoom: 15
+      },
+      {
+        id: "lincoln-memorial",
+        name: "Lincoln Memorial",
+        location: "Washington, D.C.",
+        description: "National monument honoring the 16th U.S. President, Abraham Lincoln.",
+        lat: 38.8893,
+        lng: -77.0506,
+        zoom: 17
+      },
+      {
+        id: "gateway-arch",
+        name: "Gateway Arch",
+        location: "St. Louis, MO",
+        description: "630-foot tall monument built as a symbol of the westward expansion.",
+        lat: 38.6247,
+        lng: -90.1848,
+        zoom: 17
+      },
+      {
+        id: "cloud-gate",
+        name: "Cloud Gate ('The Bean')",
+        location: "Chicago, IL",
+        description: "Public sculpture in Millennium Park known for its reflective stainless steel surface.",
+        lat: 41.8827,
+        lng: -87.6233,
+        zoom: 18
+      },
+      {
+        id: "space-needle",
+        name: "Space Needle",
+        location: "Seattle, WA",
+        description: "Observation tower and landmark of the Pacific Northwest.",
+        lat: 47.6205,
+        lng: -122.3493,
+        zoom: 17
+      },
+      {
+        id: "mount-rushmore",
+        name: "Mount Rushmore",
+        location: "Keystone, SD",
+        description: "Massive sculpture carved into granite featuring four U.S. presidents.",
+        lat: 43.8791,
+        lng: -103.4591,
+        zoom: 16
+      }
+    ];
+
+    // Initialize Map centered over the Continental US
+    const map = L.map('map').setView([39.8283, -98.5795], 4);
+
+    // Load OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const landmarkListEl = document.getElementById('landmark-list');
+    const markers = {};
+
+    // Populate Sidebar and Add Markers
+    landmarks.forEach((place) => {
+      // Create Marker
+      const marker = L.marker([place.lat, place.lng]).addTo(map);
+      marker.bindPopup(`<b>${place.name}</b><br>${place.description}`);
+      markers[place.id] = marker;
+
+      // Create Sidebar Card
+      const card = document.createElement('div');
+      card.className = 'landmark-card';
+      card.id = `card-${place.id}`;
+      card.innerHTML = `
+        <h3>${place.name}</h3>
+        <p><strong>${place.location}</strong></p>
+        <p>${place.description}</p>
+      `;
+
+      // Click Event on Card
+      card.addEventListener('click', () => {
+        // Fly map smoothly to selected landmark
+        map.flyTo([place.lat, place.lng], place.zoom, {
+          duration: 1.5
+        });
+
+        // Open popup marker
+        marker.openPopup();
+
+        // Highlight active card
+        document.querySelectorAll('.landmark-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+
+      landmarkListEl.appendChild(card);
+    });
+  </script>
+</body>
+</html>
